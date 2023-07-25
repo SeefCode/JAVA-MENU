@@ -10,9 +10,11 @@ import java.util.Scanner;
 import java.lang.Thread;
 
 
+// to handle possible mistakes and errors in class later
+
 public class Menu {
 
-    // An inner class Status which contains class const's
+    // An inner class Status which contains Status names as const's
     public class Status{
         protected static final int ADD = 1;
         protected static final int ADD_AT = 2;
@@ -22,16 +24,27 @@ public class Menu {
         protected static final int CLEAR = 6;
         protected static final int PRINT = 7;
         protected static final int COUNT_ELEMENTS = 8;
-        protected static final int EXIT = 9;
-
+        protected static final int REPLACE_ALL = 9;
+        protected static final int EXIT = 10;
         protected static final int MIN_VAL = 1;
-        protected static final int MAX_VAL = 9;
+        protected static final int MAX_VAL = 10;
         public Status(){}
+    }
+
+    // An inner class Errors which contains Errors names as const's
+    public class Errors{
+        protected static final String LIST_IS_FULL = "The list is full" ;
+        protected static final String ELEMENT_NOT_FOUND = "Element is not found in the list";
+        protected static final String INPUT_IS_WRONG = "Wrong input, your choice should be +" +
+                                                       "["+Status.MIN_VAL+"-"+Status.MAX_VAL+"]"+":";
+        protected static final String INVALID_SIZE = "Size is invalid -> [size > 0]";
+        protected static final String EMPTY_LIST = "List is empty";
+        protected static final String OUT_OF_RANGE = "Index out of range";
+        public Errors(){}
     }
 
     private ArrayList <Integer> list;
     private Scanner in;
-    private int nextIndex;
     private int capacity;
     private int choice;
     private int CountElement;
@@ -52,7 +65,7 @@ public class Menu {
     }
 
     /**
-     * Get-method of the attribut list
+     * Get-method of the attribute list
      * @return the list as an ArrayList
      */
     public ArrayList<Integer> getList(){
@@ -60,7 +73,7 @@ public class Menu {
     }
 
     /**
-     *  Get-method of the attribut CountElement
+     *  Get-method of the attribute CountElement
      * @return the number of the added elements to the list
      */
     public int getCountElement(){
@@ -114,6 +127,10 @@ public class Menu {
             System.out.println(getCountElement());
         }
 
+        else if(this.choice == Status.REPLACE_ALL){
+            replaceElements();
+        }
+
         else if(this.choice == Status.EXIT){
             return;
         }
@@ -124,7 +141,7 @@ public class Menu {
      */
     public void add(){
         int element = in.nextInt();
-        check((list.size() < get_capacity()),"The list is full now");
+        check((list.size() < get_capacity()),Errors.LIST_IS_FULL);
         list.add(element);
         CountElement++;
     }
@@ -134,7 +151,7 @@ public class Menu {
      */
     public void remove(){
         int element = in.nextInt();
-        check(list.contains(element),"Element is not found in the list");
+        check(list.contains(element),Errors.ELEMENT_NOT_FOUND);
         list.remove((Integer) element);
 
     }
@@ -147,7 +164,7 @@ public class Menu {
         this.choice = in.nextInt();
         boolean condition =   this.choice >= Status.MIN_VAL && this.choice <= Status.MAX_VAL;
 
-        check(condition, "Wrong input, your choice should be ["+Status.MIN_VAL+"-"+Status.MAX_VAL+"]:");
+        check(condition,Errors.INPUT_IS_WRONG );
     }
 
     /**
@@ -164,7 +181,7 @@ public class Menu {
     public void set_capacity(){
         System.out.print("[Enter the capacity of the list]:");
         this.capacity = in.nextInt();
-        check(capacity > 0,"Size should be bigger than 0");
+        check(capacity > 0,Errors.INVALID_SIZE);
     }
 
     /**
@@ -188,7 +205,8 @@ public class Menu {
                 "6. clear list\n"+
                 "7. Print List\n"+
                 "8. Count added Elements\n"+
-                "9. Exit Program\n"
+                "9. replace some elements\n"+
+                "10. Exit Program\n"
         );
     }
 
@@ -197,34 +215,17 @@ public class Menu {
      *
      */
     public void whichStatus(){
-        switch (getChoice()){
-            case Status.ADD:
-                printOutput("[Enter number]:","Element added");
-                break;
-            case Status.REMOVE:
-                printOutput("[Enter an Element to remove]:","Element removed");
-                break;
-            case Status.SORT:
-                printOutput("[Sorted List] -> ","Soretd List printed");
-                break;
-            case Status.SIZE:
-                printOutput("[List size] -> ","Size printed");
-                break;
-            case Status.CLEAR:
-                printOutput("[List cleared] -> ","Elements removed");
-                break;
-            case Status.ADD_AT:
-                printOutput("","");
-                break;
-            case Status.PRINT:
-                printOutput("","");
-                break;
-            case Status.COUNT_ELEMENTS:
-                printOutput("[Counted Elements]:","");
-                break;
-            case Status.EXIT:
-                printOutput("All work was saved !\n","Program exited");
-                break;
+        switch (getChoice()) {
+            case Status.ADD -> printOutput("[Enter number]:", "Element added");
+            case Status.REMOVE -> printOutput("[Enter an Element to remove]:", "Element removed");
+            case Status.SORT -> printOutput("[Sorted List] -> ", "Soretd List printed");
+            case Status.SIZE -> printOutput("[List size] -> ", "Size printed");
+            case Status.CLEAR -> printOutput("[List cleared] -> ", "Elements removed");
+            case Status.ADD_AT -> printOutput("", "");
+            case Status.PRINT -> printOutput("", "");
+            case Status.COUNT_ELEMENTS -> printOutput("[Counted Elements]:", "");
+            case Status.REPLACE_ALL -> printOutput("", "");
+            case Status.EXIT -> printOutput("All work was saved !\n", "Program exited");
         }
     }
 
@@ -261,7 +262,7 @@ public class Menu {
             whichStatus();
             if(getChoice() != Status.PRINT)
                 printList();
-            Thread.sleep(2000);
+            Thread.sleep(1000);
         }
         while ((choice != Status.EXIT));
     }
@@ -271,7 +272,7 @@ public class Menu {
      * This method sorts a list
      */
     public void sortList(){
-        check(!list.isEmpty(),"List has no elements to be sorted");
+        check(!list.isEmpty(),Errors.EMPTY_LIST);
         list.sort(naturalOrder());
     }
 
@@ -286,14 +287,14 @@ public class Menu {
                 new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
             else
                 Runtime.getRuntime().exec("clear");
-        } catch (IOException | InterruptedException ex) {}
+        } catch (IOException | InterruptedException ignored) {}
     }
 
     /**
      * This Method deletes all the elements of the given list
      */
     public void clear(){
-        check(!list.isEmpty(),"List is empty");
+        check(!list.isEmpty(),Errors.EMPTY_LIST);
         list.clear();
     }
 
@@ -322,10 +323,39 @@ public class Menu {
         int index = elements[0];
         int number = elements[1];
 
-        check(!(index < 0 && index <= list.size()-1),"Index out of range");
+
+        check(!(index < 0 && index >= list.size()-1),Errors.OUT_OF_RANGE);
         list.remove((Integer) list.get(index));
         list.add(index,(Integer) number);
         CountElement++;
+    }
+
+    /**
+     * This method replace set of elements to new added elements by the user
+     */
+    public void replaceElements(){
+        int size;
+        int startIndex;
+
+        check(!list.isEmpty(),Errors.EMPTY_LIST);
+
+        System.out.print("How many numbers do you want to replace:");
+        size = in.nextInt();
+
+        check(size > 0,Errors.INVALID_SIZE);
+
+        System.out.print("Enter the start Index:");
+        startIndex = in.nextInt();
+
+        check(!((startIndex <= 0 ) && (startIndex >= list.size())) ,Errors.OUT_OF_RANGE);
+        int element = 0;
+
+        for(int j = 1,i = startIndex;i < size;i++){
+            System.out.print("Number["+ (j) +"]:");
+            element = in.nextInt();
+            list.set(i,element);
+            j++;
+        }
     }
 
     /**
@@ -334,7 +364,7 @@ public class Menu {
      * @param msg the thrown message as a String by possible Illegal cases
      * @return the result as boolean datatype
      */
-    public boolean check(boolean condition,String msg){
+    public boolean check(boolean condition,final String msg){
         if(!condition)
             throw new IllegalArgumentException(msg);
         else
